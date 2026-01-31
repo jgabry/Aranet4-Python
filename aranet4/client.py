@@ -502,6 +502,7 @@ class RecordItem:
     """dataclass to store historical records"""
 
     date: datetime
+    sequence_from_latest: int  # 0 = most recent reading, increases for older readings
     temperature: float
     humidity: int
     pressure: float
@@ -1233,8 +1234,13 @@ async def _all_records(address, entry_filter, remove_empty):
         radon_concentration_val = _empty_reading(log_size)
 ####
     # Store returned data in dataclass
+    # Calculate sequence_from_latest: 0 = newest reading, log_size-1 = oldest
+    # log_points index 0 is oldest, so sequence = log_size - 1 - idx
+    sequences = [log_size - 1 - idx for idx in range(log_size)]
+
     data = zip(
         log_points,
+        sequences,
         co2_val,
         temperature_val,
         pressure_val,
@@ -1247,8 +1253,8 @@ async def _all_records(address, entry_filter, remove_empty):
 
     record = Record(dev_name, dev_version, log_size, rec_filter)
 
-    for date, co2, temp, pres, hum, rad, rad_rate, rad_integral, radon in data:
-        record.value.append(RecordItem(date, temp, hum, pres, co2, rad, rad_rate, rad_integral, radon))
+    for date, seq, co2, temp, pres, hum, rad, rad_rate, rad_integral, radon in data:
+        record.value.append(RecordItem(date, seq, temp, hum, pres, co2, rad, rad_rate, rad_integral, radon))
     if remove_empty:
         record.value = record.value[begin - 1:end + 1]
     return record

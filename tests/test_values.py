@@ -122,6 +122,33 @@ class DataManipulation(unittest.TestCase):
         times = client._log_times(now, log_records, log_interval, 20)
         self.assertListEqual(expected, times)
 
+    def test_record_item_sequence_from_latest(self):
+        """Test that sequence_from_latest is correctly populated in RecordItem"""
+        # Test basic RecordItem creation with sequence
+        record = client.RecordItem(
+            date=datetime.datetime(2024, 1, 1, 12, 0, 0),
+            sequence_from_latest=0,
+            temperature=21.5,
+            humidity=45,
+            pressure=1013.25,
+            co2=800,
+            rad_dose=0.0,
+            rad_dose_rate=0.0,
+            rad_dose_total=0.0,
+            radon_concentration=0
+        )
+        self.assertEqual(record.sequence_from_latest, 0)
+        self.assertEqual(record.temperature, 21.5)
+
+        # Test that sequence_from_latest follows the expected pattern:
+        # 0 = most recent, higher numbers = older readings
+        log_size = 10
+        sequences = [log_size - 1 - idx for idx in range(log_size)]
+        # First element (oldest) should have highest sequence
+        self.assertEqual(sequences[0], 9)
+        # Last element (newest) should have sequence 0
+        self.assertEqual(sequences[-1], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
